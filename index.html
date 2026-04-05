@@ -3,19 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TodoList</title>
-    <!-- ИСПРАВЛЕНО: Надежные ссылки на библиотеки (CDN) -->
+    <title>TodoList — Планировщик</title>
+    
+    <!-- 1. ПОДКЛЮЧАЕМ БИБЛИОТЕКИ В САМОМ НАЧАЛЕ -->
     <link href="https://jsdelivr.net" rel="stylesheet">
     <script src="https://jsdelivr.net"></script>
     
     <style>
+        /* Скрываем необработанные шаблоны Vue до загрузки */
+        [v-cloak] { display: none; }
+        
         .container-narrow { max-width: 700px; margin: 0 auto; }
         .main-app-container { min-height: 100vh; background-color: #fff; display: flex; width: 100%; }
         .side-menu { width: 280px; border-right: 1px solid #f0f0f0; transition: all 0.3s ease; background: #f8f9fa; }
         .side-menu.collapsed { width: 75px; }
         .cat-trigger-img { max-width: 40px; cursor: pointer; }
-        .nav-link { cursor: pointer; color: #333; padding: 10px 15px; display: block; text-decoration: none; }
-        .active-item { background: #e9ecef; border-radius: 8px; font-weight: bold; }
+        .nav-link { cursor: pointer; color: #333; padding: 10px 15px; display: block; text-decoration: none; transition: 0.2s; }
+        .active-item { background: #e9ecef; border-radius: 8px; font-weight: bold; color: #0d6efd !important; }
+        .todo-item { transition: 0.2s; border-radius: 12px !important; }
+        .todo-item:hover { background-color: #fcfcfc; }
+        
         @media (max-width: 767.98px) { 
             main { padding-top: 75px !important; } 
             .side-menu { display: none !important; } 
@@ -23,14 +30,16 @@
     </style>
 </head>
 <body>
-    <div id="app">
+    <!-- Атрибут v-cloak уберет "скобки" при загрузке -->
+    <div id="app" v-cloak>
         <div class="main-app-container">
-            <!-- Кнопка для мобильных -->
+            
+            <!-- КНОПКА МЕНЮ (МОБИЛЬНАЯ) -->
             <button v-if="isVisible" class="btn d-md-none position-fixed border-0 bg-transparent p-0" style="top:15px; left:15px; z-index:2000;" @click="toggleCat">
-                <img src="CatHeader.png" class="cat-trigger-img">
+                <img src="CatHeader.png" class="cat-trigger-img" alt="Меню">
             </button>
 
-            <!-- Сайдбар для ПК -->
+            <!-- САЙДБАР (ДЛЯ ПК) -->
             <header class="d-none d-md-flex flex-column p-3 side-menu" :class="{ 'collapsed': isCollapsed }">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 v-if="!isCollapsed" class="m-0 fw-bold">Меню</h4>
@@ -39,40 +48,62 @@
                     </button>
                 </div>
                 <nav class="nav flex-column">
-                    <div class="nav-link" :class="{ 'active-item': activeTab === 'today' }" @click="setActive('today')">☀️ <span v-if="!isCollapsed" class="ms-2">Сегодня</span></div>
-                    <div class="nav-link" :class="{ 'active-item': activeTab === 'upcoming' }" @click="setActive('upcoming')">📅 <span v-if="!isCollapsed" class="ms-2">На потом</span></div>
+                    <div class="nav-link mb-1" :class="{ 'active-item': activeTab === 'today' }" @click="setActive('today')">
+                        ☀️ <span v-if="!isCollapsed" class="ms-2">Сегодня</span>
+                    </div>
+                    <div class="nav-link mb-1" :class="{ 'active-item': activeTab === 'upcoming' }" @click="setActive('upcoming')">
+                        📅 <span v-if="!isCollapsed" class="ms-2">На потом</span>
+                    </div>
                 </nav>
             </header>
 
-            <!-- Контент -->
-            <main class="flex-grow-1 p-4 p-md-5">
+            <!-- ОСНОВНОЙ КОНТЕНТ -->
+            <main class="flex-grow-1 p-4 p-md-5 overflow-auto">
                 <div class="container-narrow">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="fw-bold m-0">{{ activeTab === 'today' ? '☀️ Сегодня' : '📅 На потом' }}</h2>
-                        <button @click="isAdding = !isAdding" class="btn btn-primary rounded-circle" style="width:45px; height:45px;">{{ isAdding ? '×' : '+' }}</button>
+                    <div class="d-flex justify-content-between align-items-center mb-5">
+                        <h1 class="fw-bold m-0 h2">
+                            {{ activeTab === 'today' ? '☀️ Сегодня' : '📅 На потом' }}
+                        </h1>
+                        <button @click="isAdding = !isAdding" class="btn btn-primary rounded-circle shadow" style="width:50px; height:50px; font-size: 24px;">
+                            {{ isAdding ? '×' : '+' }}
+                        </button>
                     </div>
 
-                    <div v-if="isAdding" class="p-4 mb-4 border rounded-4 shadow-sm">
-                        <input v-model="newTaskText" class="form-control mb-3 border-0 fs-5 shadow-none" placeholder="Что нужно сделать?">
-                        <button @click="saveTask" class="btn btn-primary w-100 rounded-pill" :disabled="!newTaskText.trim()">Добавить</button>
-                    </div>
-
-                    <div class="todo-list">
-                        <div v-for="todo in filteredTodos" :key="todo.id" class="d-flex align-items-center p-3 mb-2 rounded-4 border bg-white">
-                            <input type="checkbox" v-model="todo.done" class="form-check-input me-3">
-                            <div class="flex-grow-1" :class="{ 'text-decoration-line-through text-muted': todo.done }">{{ todo.text }}</div>
-                            <button @click="deleteTask(todo.id)" class="btn text-danger">×</button>
+                    <!-- ФОРМА ДОБАВЛЕНИЯ -->
+                    <div v-if="isAdding" class="p-4 mb-4 border rounded-4 shadow-sm bg-light">
+                        <input v-model="newTaskText" class="form-control mb-3 border-0 fs-5 shadow-none bg-transparent" placeholder="Что нужно сделать?" autofocus>
+                        <div class="d-flex justify-content-end">
+                            <button @click="saveTask" class="btn btn-primary px-4 rounded-pill fw-bold" :disabled="!newTaskText.trim()">Добавить задачу</button>
                         </div>
-                        <div v-if="filteredTodos.length === 0" class="text-center mt-5 text-muted fs-5">Пока задач нет 🐾</div>
+                    </div>
+
+                    <!-- СПИСОК ЗАДАЧ -->
+                    <div class="todo-list">
+                        <div v-for="todo in filteredTodos" :key="todo.id" class="todo-item d-flex align-items-center p-3 mb-2 border bg-white shadow-sm">
+                            <input type="checkbox" v-model="todo.done" class="form-check-input me-3 shadow-none">
+                            <div class="flex-grow-1 fs-5" :class="{ 'text-decoration-line-through text-muted opacity-50': todo.done }">
+                                {{ todo.text }}
+                            </div>
+                            <button @click="deleteTask(todo.id)" class="btn text-danger border-0 p-1 ms-2">
+                                <span style="font-size: 24px;">&times;</span>
+                            </button>
+                        </div>
+                        
+                        <!-- ПУСТОЕ СОСТОЯНИЕ -->
+                        <div v-if="filteredTodos.length === 0" class="text-center mt-5 py-5 text-muted">
+                            <div class="fs-1 mb-2">🐾</div>
+                            <div class="fs-5">Пока задач нет, отдохните!</div>
+                        </div>
                     </div>
                 </div>
             </main>
         </div>
     </div>
 
+    <!-- 2. ЛОГИКА ПРИЛОЖЕНИЯ -->
     <script>
-        // ИНИЦИАЛИЗАЦИЯ VUE
         const { createApp, ref, computed, watch } = Vue
+
         createApp({
             setup() {
                 const activeTab = ref('today')
@@ -80,21 +111,26 @@
                 const isVisible = ref(true)
                 const isAdding = ref(false)
                 const newTaskText = ref('')
+                
+                // Загрузка данных из LocalStorage
                 const todos = ref(JSON.parse(localStorage.getItem('my-todos')) || [])
 
+                // Сохранение при каждом изменении
                 watch(todos, (val) => {
                     localStorage.setItem('my-todos', JSON.stringify(val))
                 }, { deep: true })
 
+                // Фильтрация по вкладкам
                 const filteredTodos = computed(() => {
                     return todos.value.filter(t => t.category === activeTab.value)
                 })
 
+                // Функции управления
                 const saveTask = () => {
                     if (!newTaskText.value.trim()) return
                     todos.value.push({ 
                         id: Date.now(), 
-                        text: newTaskText.value, 
+                        text: newTaskText.value.trim(), 
                         category: activeTab.value, 
                         done: false 
                     })
@@ -106,8 +142,8 @@
                     todos.value = todos.value.filter(t => t.id !== id)
                 }
 
-                const setActive = (t) => { 
-                    activeTab.value = t
+                const setActive = (tabId) => { 
+                    activeTab.value = tabId
                     isAdding.value = false 
                 }
 
@@ -124,5 +160,4 @@
 </body>
 </html>
 
-</html>
 
