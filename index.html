@@ -1,14 +1,35 @@
 <!DOCTYPE html>
-<html lang="">
-  <head>
+<html lang="ru">
+<head>
     <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vite App</title>
-    <script type="module" crossorigin src="assets/index-DKFhHRvX.js"></script>
-    <link rel="stylesheet" crossorigin href="assets/index-DBkz-poX.css">
-  </head>
-  <body>
-    <div id="app"></div>
-  </body>
+    <title>TodoList</title>
+    <!-- Подключаем Bootstrap и Vue напрямую -->
+    <link href="https://jsdelivr.net" rel="stylesheet">
+    <script src="https://unpkg.com"></script>
+    <style>
+        /* Вставьте сюда весь ваш CSS из блока <style scoped> вашего проекта */
+        .container-narrow { max-width: 700px; margin: 0 auto; }
+        .main-app-container { min-height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Сюда вставьте ВЕСЬ HTML-код из вашего <template> (от <div class="d-flex..."> до конца </main> </div>) -->
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted, watch } = Vue
+        createApp({
+            setup() {
+                // Вставьте сюда ВСЮ вашу логику (const activeTab = ref... и все функции до конца setup)
+                // Не забудьте вернуть переменные в конце:
+                return {
+                    activeTab, isCollapsed, isVisible, isAdding, newTaskText, newTaskDate, todos, filteredTodos,
+                    setActive, saveTask, deleteTask, toggleDesktop, toggleCat
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
 </html>
