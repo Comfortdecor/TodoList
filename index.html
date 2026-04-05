@@ -3,99 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TodoList</title>
-    <!-- ПОДКЛЮЧЕНИЕ ЧЕРЕЗ РЕЗЕРВНЫЕ СЕРВЕРА -->
-    <link rel="stylesheet" href="https://cloudflare.com">
-    <script src="https://cloudflare.com"></script>
+    <title>Мой Список Дел</title>
     <style>
-        [v-cloak] { display: none; }
-        .container-narrow { max-width: 700px; margin: 0 auto; }
-        .main-app-container { min-height: 100vh; background-color: #fff; display: flex; width: 100%; }
-        .side-menu { width: 280px; border-right: 1px solid #f0f0f0; transition: all 0.3s ease; background: #f8f9fa; }
-        .side-menu.collapsed { width: 75px; }
-        .cat-trigger-img { max-width: 40px; cursor: pointer; }
-        .nav-link { cursor: pointer; color: #333; padding: 10px 15px; display: block; text-decoration: none; }
-        .active-item { background: #e9ecef; border-radius: 8px; font-weight: bold; color: #0d6efd !important; }
-        @media (max-width: 767.98px) { main { padding-top: 75px !important; } .side-menu { display: none !important; } }
+        /* Базовый Bootstrap (упрощенный для веса) */
+        :root{--bs-blue:#0d6efd;--bs-primary:#0d6efd;--bs-light:#f8f9fa;--bs-white:#fff;--bs-gray-dark:#343a40}
+        body{margin:0;font-family:system-ui,-apple-system,sans-serif;font-size:1rem;background-color:#fff;color:#212529}
+        .d-flex{display:flex!important}.flex-column{flex-direction:column!important}.vh-100{height:100vh!important}.vw-100{width:100vw!important}
+        .p-3{padding:1rem!important}.p-4{padding:1.5rem!important}.mb-4{margin-bottom:1.5rem!important}.ms-3{margin-left:1rem!important}
+        .bg-light{background-color:#f8f9fa!important}.border-right{border-right:1px solid #dee2e6!important}
+        .btn{display:inline-block;font-weight:400;text-align:center;vertical-align:middle;cursor:pointer;padding:.375rem .75rem;border-radius:.375rem;text-decoration:none}
+        .btn-primary{color:#fff;background-color:#0d6efd;border:none}.rounded-circle{border-radius:50%!important}
+        .form-control{display:block;width:100%;padding:.375rem .75rem;font-size:1rem;border:1px solid #ced4da;border-radius:.375rem}
+        /* Твои кастомные стили */
+        [v-cloak]{display:none}.container-narrow{max-width:700px;margin:0 auto}
+        .side-menu{width:280px;transition:all 0.3s ease}.side-menu.collapsed{width:75px}
+        .todo-item{display:flex;align-items:center;padding:1rem;margin-bottom:.5rem;border:1px solid #dee2e6;border-radius:1rem}
+        .done-text{text-decoration:line-through;color:#6c757d;opacity:0.5}
     </style>
 </head>
 <body>
     <div id="app" v-cloak>
-        <div class="main-app-container">
-            <!-- КНОПКА КОТИК -->
-            <button v-if="isVisible" class="btn d-md-none position-fixed border-0 bg-transparent p-0" style="top:15px; left:15px; z-index:2000;" @click="toggleCat">
-                <img src="CatHeader.png" class="cat-trigger-img" alt="Menu">
-            </button>
-
-            <!-- МЕНЮ -->
-            <header class="d-none d-md-flex flex-column p-3 side-menu" :class="{ 'collapsed': isCollapsed }">
+        <div class="d-flex vw-100 vh-100">
+            <!-- Сайдбар -->
+            <header class="d-md-flex flex-column vh-100 p-3 bg-light border-right side-menu" :class="{'collapsed': isCollapsed}">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 v-if="!isCollapsed" class="m-0 fw-bold">Меню</h4>
-                    <button @click="toggleDesktop" class="btn border-0 p-0"><img src="CatHeader.png" width="30"></button>
+                    <h4 v-if="!isCollapsed" class="m-0">Меню</h4>
+                    <button @click="isCollapsed = !isCollapsed" class="btn">🐾</button>
                 </div>
-                <nav class="nav flex-column">
-                    <div class="nav-link mb-1" :class="{ 'active-item': activeTab === 'today' }" @click="setActive('today')">☀️ <span v-if="!isCollapsed" class="ms-2">Сегодня</span></div>
-                    <div class="nav-link mb-1" :class="{ 'active-item': activeTab === 'upcoming' }" @click="setActive('upcoming')">📅 <span v-if="!isCollapsed" class="ms-2">На потом</span></div>
+                <nav class="flex-column d-flex">
+                    <button @click="activeTab = 'today'" class="btn mb-2 text-start" :class="activeTab === 'today' ? 'btn-primary' : ''">☀️ <span v-if="!isCollapsed">Сегодня</span></button>
+                    <button @click="activeTab = 'upcoming'" class="btn text-start" :class="activeTab === 'upcoming' ? 'btn-primary' : ''">📅 <span v-if="!isCollapsed">На потом</span></button>
                 </nav>
             </header>
 
-            <!-- СПИСОК -->
-            <main class="flex-grow-1 p-4 p-md-5">
+            <!-- Контент -->
+            <main class="p-4 flex-grow-1 overflow-auto">
                 <div class="container-narrow">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="fw-bold m-0">{{ activeTab === 'today' ? '☀️ Сегодня' : '📅 На потом' }}</h2>
-                        <button @click="isAdding = !isAdding" class="btn btn-primary rounded-circle" style="width:45px; height:45px;">{{ isAdding ? '×' : '+' }}</button>
+                        <h2 class="m-0">{{ activeTab === 'today' ? '☀️ Сегодня' : '📅 На потом' }}</h2>
+                        <button @click="isAdding = !isAdding" class="btn btn-primary rounded-circle" style="width:45px;height:45px">{{ isAdding ? '×' : '+' }}</button>
                     </div>
 
-                    <div v-if="isAdding" class="p-4 mb-4 border rounded-4 shadow-sm bg-light">
-                        <input v-model="newTaskText" class="form-control mb-3 border-0 fs-5 shadow-none bg-transparent" placeholder="Что нужно сделать?">
-                        <button @click="saveTask" class="btn btn-primary w-100 rounded-pill fw-bold" :disabled="!newTaskText.trim()">Добавить</button>
+                    <div v-if="isAdding" class="mb-4 p-3 border rounded shadow-sm">
+                        <input v-model="newTaskText" class="form-control mb-2" placeholder="Что нужно сделать?" @keyup.enter="saveTask">
+                        <button @click="saveTask" class="btn btn-primary w-100" :disabled="!newTaskText.trim()">Добавить</button>
                     </div>
 
-                    <div class="todo-list">
-                        <div v-for="todo in filteredTodos" :key="todo.id" class="d-flex align-items-center p-3 mb-2 rounded-4 border bg-white shadow-sm">
-                            <input type="checkbox" v-model="todo.done" class="form-check-input me-3 shadow-none">
-                            <div class="flex-grow-1" :class="{ 'text-decoration-line-through text-muted': todo.done }">{{ todo.text }}</div>
-                            <button @click="deleteTask(todo.id)" class="btn text-danger border-0">×</button>
-                        </div>
-                        <div v-if="filteredTodos.length === 0" class="text-center mt-5 text-muted fs-5">Пока задач нет 🐾</div>
+                    <div v-for="todo in filteredTodos" :key="todo.id" class="todo-item shadow-sm">
+                        <input type="checkbox" v-model="todo.done" class="me-3">
+                        <div class="flex-grow-1 ms-3" :class="{'done-text': todo.done}">{{ todo.text }}</div>
+                        <button @click="deleteTask(todo.id)" class="btn text-danger">×</button>
                     </div>
+                    <div v-if="filteredTodos.length === 0" class="text-center mt-5">Пока задач нет 🐾</div>
                 </div>
             </main>
         </div>
     </div>
+     <!-- Подключаем твой локальный файл vue.js -->
+    <script src="vue.js"></script>
 
     <script>
         const { createApp, ref, computed, watch } = Vue
         createApp({
             setup() {
-                const activeTab = ref('today')
-                const isCollapsed = ref(false)
-                const isVisible = ref(true)
-                const isAdding = ref(false)
-                const newTaskText = ref('')
+                const activeTab = ref('today'), isCollapsed = ref(false), isAdding = ref(false), newTaskText = ref('')
                 const todos = ref(JSON.parse(localStorage.getItem('my-todos')) || [])
-
-                watch(todos, (val) => {
-                    localStorage.setItem('my-todos', JSON.stringify(val))
-                }, { deep: true })
-
-                const filteredTodos = computed(() => {
-                    return todos.value.filter(t => t.category === activeTab.value)
-                })
-
+                watch(todos, (val) => localStorage.setItem('my-todos', JSON.stringify(val)), { deep: true })
+                const filteredTodos = computed(() => todos.value.filter(t => t.category === activeTab.value))
                 const saveTask = () => {
                     if (!newTaskText.value.trim()) return
-                    todos.value.push({ id: Date.now(), text: newTaskText.value, category: activeTab.value, done: false })
+                    todos.value.push({ id: Date.now(), text: newTaskText.value.trim(), category: activeTab.value, done: false })
                     newTaskText.value = ''; isAdding.value = false
                 }
-
                 const deleteTask = (id) => todos.value = todos.value.filter(t => t.id !== id)
-                const setActive = (t) => { activeTab.value = t; isAdding.value = false }
-                const toggleDesktop = () => isCollapsed.value = !isCollapsed.value
-                const toggleCat = () => isVisible.value = false
-
-                return { activeTab, isCollapsed, isVisible, isAdding, newTaskText, filteredTodos, saveTask, deleteTask, setActive, toggleDesktop, toggleCat }
+                return { activeTab, isCollapsed, isAdding, newTaskText, filteredTodos, saveTask, deleteTask }
             }
         }).mount('#app')
     </script>
