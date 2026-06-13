@@ -10,7 +10,7 @@ const newTaskText = ref('')
 const newTaskDate = ref(new Date().toISOString().substr(0, 10))
 const newTaskImage = ref(null)
 
-const MAX_CHARS = 500
+const MAX_CHARS = 2000
 const openedImage = ref(null)
 
 // Хранилище задач
